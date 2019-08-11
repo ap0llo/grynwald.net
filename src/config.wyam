@@ -7,4 +7,5 @@ Settings[BlogKeys.Title] = "grynwald.net";
 Settings[BlogKeys.Description] = "Andreas Grünwald's personal blog";
 // TODO: Settings[BlogKeys.Intro] = "";  
 
-// Add any pipeline customizations here
+
+Settings["Git.RepoUrl"] = "https://github.com/ap0llo/grynwald.net";

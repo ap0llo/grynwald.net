@@ -18,14 +18,39 @@
                         </span>
                     </a>
                 </li>
-            </ul>
+            </ul>            
             <p class="copyright text-muted">
                 Copyright © @DateTime.Now.Year by Andreas Grünwald. The opinions expressed herein are my own and do not represent those of my employer or any other third-party views in any way. 
                 <br />
                 <a href="/feed.rss"><i class="fa fa-rss"></i> RSS Feed</a> | <a href="/feed.atom"><i class="fa fa-rss"></i> Atom Feed</a>
                 <br />
-                <a href="https://github.com/ap0llo/grynwald.net"><i class="fa fa-github"></i> This Site on GitHub</a>
-                <br />
+                @{
+                        var repoUrl = Context.String("Git.RepoUrl");
+                        var commitHash = Context.String("Git.CommitHash");
+
+                        if(repoUrl != null && commitHash != null)
+                        {
+                            var commitUrl = repoUrl;
+                            if(!commitUrl.EndsWith("/"))
+                            {
+                                commitUrl += "/";
+                            }
+
+                            commitUrl += "commit/" + commitHash;
+
+                            {
+                                <span>
+                                <a href="@repoUrl"><i class="fa fa-github"></i>This Site on GitHub</a>, source version <a href="@commitUrl">@commitHash</a>
+                                </span>
+                                <br />
+                            }
+                        }
+                        else if(repoUrl != null)
+                        {
+                            <a href="@repoUrl"><i class="fa fa-github"></i>This Site on GitHub</a>
+                            <br />                            
+                        }         
+                }                
                 Hosted by <a href="https://pages.github.com/">GitHub Pages</a>
                 <br />                
                 Theme and Layout based on <a href="https://github.com/daveaglick/daveaglick">Dave Glick's blog</a>
