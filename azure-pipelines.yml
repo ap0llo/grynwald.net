@@ -4,6 +4,31 @@ trigger:
 pool:
   vmImage: 'vs2017-win2016'
 
+variables:
+  dotNetSdk_Version: 2.1.801
+  artifactsName: drop
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE : true
+
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+  # Install .NET Core SDK (version specified in the variables section) and Wyam
+  - task: DotNetCoreInstaller@0
+    displayName: "Install .NET Core SDK"
+    inputs:
+      version: $(dotNetSdk_Version)
+  - task: DotNetCoreCLI@2
+    displayName: "Install wyam" 
+    inputs:
+      command: custom
+      custom: tool
+      arguments: install --tool-path . Wyam.Tool
+  
+  # Run build
+  - powershell: .\build.ps1 -OutputDirectory `"$env:BUILD_BINARIESDIRECTORY`"
+    displayName: "Build site"
+
+  # Publish site as build artifac
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifacts'
+    inputs:
+      pathtoPublish: $(Build.BinariesDirectory)
+      artifactName: $(artifactsName)

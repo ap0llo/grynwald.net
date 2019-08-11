@@ -1,4 +1,5 @@
 # Assumes "wyam" (https://wyam.io/) is installed either globally or in the same directory as this script
+param($OutputDirectory)
 
 function Log-Error($message) {
     if($env:TF_BUILD) {
@@ -38,13 +39,19 @@ function Get-WyamPath {
     Pop-Location    
 }    
 
+
+if($null -eq $OutputDirectory) {
+    $OutputDirectory = Join-Path $PSScriptRoot "output"    
+} 
+Log-Info "Using output directory '$OutputDirectory'"
+
 $wyamPath = Get-WyamPath
 $inputRoot = $PSScriptRoot 
 
 Push-Location $inputRoot
 
 Log-Info "Starting wyam build"
-Invoke-Expression "$wyamPath build"
+Invoke-Expression "$wyamPath build --output `"`$OutputDirectory`""
 if($LASTEXITCODE -ne 0) {
     Log-Error "wyam failed with exit code $LASTEXITCODE"
     throw "Build failed."
