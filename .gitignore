@@ -1,0 +1,14 @@
+
+# Created by https://www.gitignore.io/api/wyam
+# Edit at https://www.gitignore.io/?templates=wyam
+
+### Wyam ###
+# Wyam Ignore - Based on https://wyam.io/docs/advanced/what_to_exclude_from_source_control
+
+/src/output/*
+/src/wwwroot/*
+/src/config.wyam.dll
+/src/config.wyam.hash
+/src/*packages.xml
+
+# End of https://www.gitignore.io/api/wyam

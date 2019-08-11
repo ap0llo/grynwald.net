@@ -1,0 +1,10 @@
+#recipe Blog
+#theme CleanBlog
+
+Settings[Keys.Host] = "grynwald.net";
+Settings[Keys.LinksUseHttps] = true;
+Settings[BlogKeys.Title] = "grynwald.net";
+Settings[BlogKeys.Description] = "Andreas Grünwald's personal blog";
+// TODO: Settings[BlogKeys.Intro] = "";  
+
+// Add any pipeline customizations here
