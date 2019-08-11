@@ -26,7 +26,7 @@ $roboCopyOptions += " /XD `"$(Join-Path $WorkingDirectory ".git")`""
 $roboCopyOptions += " /XF `"$(Join-Path $WorkingDirectory "CNAME")`""
 
 Invoke-Expression "robocopy `"$SourceDirectory`" `"$WorkingDirectory`" $roboCopyOptions"
-if($LASTEXITCODE -gt 1) {
+if($LASTEXITCODE -gt 7) {
     Log-Error "Robocopy exited with exit code $LASTEXITCODE"
     exit 1
 }
