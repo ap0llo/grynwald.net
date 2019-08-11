@@ -56,7 +56,7 @@ steps:
       .\deploy.ps1 -SourceDirectory `"$(Build.BinariesDirectory)`" `
                    -RepositoryUrl `"$(GhPages.RepositoryUrl)`"  `
                    -TargetBranch `"$(GhPages.Branch)`" `
-                   -WorkingDirectory `"workingDirectory`"
+                   -WorkingDirectory $workingDirectory
 
     displayName: Publish site to GitHub Pages
 
