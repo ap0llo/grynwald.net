@@ -1,3 +1,7 @@
 .copyright {
     line-height: 250%;
 }
+
+.sidebar {
+    visibility: collapse
+}
