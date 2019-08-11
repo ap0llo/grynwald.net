@@ -12,26 +12,27 @@ variables:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE : true
   GhPages.Branch: master
   GhPages.Url: git@github.com:ap0llo/ap0llo.github.io.git
+  GhPages.WorkingDirectoryName: ap0llo.github.io
   GhPages.KnownHostsEntry: github.com,140.82.118.3 ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
   GhPages.DeployKeyPublic: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDG847jUe3RNygCMCHEqgJ5zbzr0xlKyN6j4WoksdG2RhpzoJ/yGF6hhifiiwXTM4TaJMxafibNUZo8ras3bRaT2t9ALRrJJvGcT1udJTbkehzi4CacU9kjpSoXl5K84FFcY4OlBXIvmmwB9FUq51mhIGAbkEosF2WrprXLoXq322/byLP/xVp6JLsq/afP0sBesuCWW0dmj5QEri4XiSstK7csDM5zE7mTBz6DB8/cNFbBAGycjbhyANWx0TzVSn4BAGyY3dWG+XxkXOOk0SaVyTBOMEGnMKt6Qug4nt28x/+qEPksAUk3aNojnqrR5DGPt8qDoB/wGCPzMOvFWkBgfgEwCglqTVgordgINJUSzmZp5MQJgAyfRlKCWWOWktU1QD/dxaBxjfIt7l0e1uUxLTwZ+HQx4jMR/ppqLARTtPy+1ZhdzKvK0iqy/uXp12jpd2xJ5sajVzZxRhrnqcT8/pZJwrvoaeNR/tdNL1Qtjm79Mzymt6M8ppR37ZwaruflUv9V5ScCcJMcmPSBqt2NMk5twPzJ7wAtd+N9LcVIMVtyMzrbYrTKhQqxrxXdSCnParAGH5TLFfBSXVLTIpoKSFj9VXrPWV+qV6s/nQZPxAd5B9SjYAuU70f9VInGlj8usAchZMVaM78olswCbudVcZCL+i2e9Wqzog5iVJTHGw== Azure Pipelines Deploy Key
   GhPages.DeployKeyPrivateSecureFile: GitHubPages-DeployKey-ap0llo.github.io_AzurePipelines
-  
+
 steps:
   # Install .NET Core SDK (version specified in the variables section) and Wyam
   - task: DotNetCoreInstaller@0
-    displayName: "Install .NET Core SDK"
+    displayName: Install .NET Core SDK
     inputs:
       version: $(dotNetSdk_Version)
   - task: DotNetCoreCLI@2
-    displayName: "Install wyam" 
+    displayName: Install wyam
     inputs:
       command: custom
       custom: tool
       arguments: install --tool-path . Wyam.Tool
-  
+
   # Run build
   - pwsh: .\build.ps1 -OutputDirectory `"$env:BUILD_BINARIESDIRECTORY`"
-    displayName: "Build site"
+    displayName: Build site
 
   # Publish site as build artifac
   - task: PublishBuildArtifacts@1
@@ -43,13 +44,49 @@ steps:
 
   # Publish site to GitHub pages
   - task: InstallSSHKey@0
+    displayName: Install GitHub Pages deploy key
     inputs:
       knownHostsEntry: $(GhPages.KnownHostsEntry)
       sshPublicKey: $(GhPages.DeployKeyPublic)
       sshKeySecureFile: $(GhPages.DeployKeyPrivateSecureFile)
   - pwsh: |
-      & git clone $(GhPages.Url) $(Build.SourcesDirectory)/ghpages
-      Push-Location $(Build.SourcesDirectory)/ghpages
-      & git checkout $(GhPages.Branch)
-      Get-ChildItem
-      Pop-Location    
+      $workingDirectory = Join-Path "$(Build.SourcesDirectory)" "$(GhPages.WorkingDirectoryName)"
+      Write-Host "Cloning repository $(GhPages.Url) into $workingDirectory"
+      Invoke-Expression "git clone $(GhPages.Url) $workingDirectory"
+      Push-Location $workingDirectory
+      Write-Host "Checking out branch $(GhPages.Branch)"
+      Invoke-Expression "git checkout $(GhPages.Branch)"
+    displayName: Clone GitHub pages repository
+  - pwsh: |
+      $workingDirectory = Join-Path "$(Build.SourcesDirectory)" "$(GhPages.WorkingDirectoryName)"
+      
+      $roboCopyOptions = "/E /PURGE"
+      $roboCopyOptions += " /XD `"$(Join-Path $workingDirectory ".git")`""  
+      $roboCopyOptions += " /XF `"$(Join-Path $workingDirectory "CNAME")`""
+
+      Invoke-Expression "robocopy `"$(Build.BinariesDirectory)`"  `"$workingDirectory`" $roboCopyOptions"
+      if($LASTEXITCODE -gt 1) {
+        Write-Host "##vso[task.logissue]error Robocopy exited with exit code $LASTEXITCODE"
+        exit 1
+      }
+
+      Push-Location $workingDirectory
+      ls
+
+      # TODO: Skip commit if there are no pending changes
+      # TODO: Use better formatting for commit message, include commit id of source repo
+      Invoke-Expression "git commit -m `"Automatic deploy to GitHub pages by Azure Pipelines ($(Build.DefinitionName)/$(Build.BuildNumber))`" "
+      if($LASTEXITCODE -ne 0) {
+        Write-Host "##vso[task.logissue]error Committing to GitHub pages repository failed, git exited with exit code $LASTEXITCODE"
+        exit 1
+      }
+
+      Pop-Location
+
+    displayName: Commit site to GitHub Pages repository
+
+  - pswh: |
+      Invoke-Expression "git push"
+    displayName: Push to GitHub Pages
+
+      
