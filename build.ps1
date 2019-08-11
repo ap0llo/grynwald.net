@@ -2,18 +2,20 @@
 param($OutputDirectory)
 
 function Log-Error($message) {
-    if($env:TF_BUILD) {
+    if ($env:TF_BUILD) {
         Write-Host "##vso[task.logissue]error $message"
-    } else {
+    }
+    else {
         Write-Host "ERROR: $message"
     }
 }
 function Log-Info($message) {
-    if($env:TF_BUILD) {
+    if ($env:TF_BUILD) {
         Write-Host "$message"
-    } else {
+    }
+    else {
         Write-Host "INFO: $message"
-     }
+    }
 }
 
 function Get-WyamPath {
@@ -23,15 +25,16 @@ function Get-WyamPath {
     Log-Info "Attempting to find Wyam installation in current directory"
     $wyamCommand = Get-Command ".\wyam" -CommandType Application -ErrorAction SilentlyContinue
     
-    if($wyamCommand -eq $null) {
+    if ($null -eq $wyamCommand) {
         Log-Info "No local installation of wyam found, attempting to find global installation"
         $wyamCommand = Get-Command "wyam" -CommandType Application -ErrorAction SilentlyContinue
     }
         
-    if($wyamCommand -eq $null) {
+    if ($null -eq $wyamCommand) {
         Log-Error "Failed to locate wyam. Aborting."
         throw "Build failed."
-    } else {
+    }
+    else {
         Log-Info "wyam found at $($wyamCommand.Source)"
         return $wyamCommand.Source
     }
@@ -40,7 +43,7 @@ function Get-WyamPath {
 }    
 
 
-if($null -eq $OutputDirectory) {
+if ($null -eq $OutputDirectory) {
     $OutputDirectory = Join-Path $PSScriptRoot "output"    
 } 
 Log-Info "Using output directory '$OutputDirectory'"
@@ -52,7 +55,7 @@ Push-Location $inputRoot
 
 Log-Info "Starting wyam build"
 Invoke-Expression "$wyamPath build --output `"`$OutputDirectory`""
-if($LASTEXITCODE -ne 0) {
+if ($LASTEXITCODE -ne 0) {
     Log-Error "wyam failed with exit code $LASTEXITCODE"
     throw "Build failed."
 }
