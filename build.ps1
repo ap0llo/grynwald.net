@@ -1,10 +1,18 @@
 # Assumes "wyam" (https://wyam.io/) is installed either globally or in the same directory as this script
 
 function Log-Error($message) {
-    Write-Host "ERROR: $message"
+    if($env:TF_BUILD) {
+        Write-Host "##vso[task.logissue]error $message"
+    } else {
+        Write-Host "ERROR: $message"
+    }
 }
 function Log-Info($message) {
-    Write-Host "INFO: $message"
+    if($env:TF_BUILD) {
+        Write-Host "$message"
+    } else {
+        Write-Host "INFO: $message"
+     }
 }
 
 function Get-WyamPath {
