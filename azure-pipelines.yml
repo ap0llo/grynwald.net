@@ -85,7 +85,7 @@ steps:
 
     displayName: Commit site to GitHub Pages repository
 
-  - pswh: |
+  - pwsh: |
       Invoke-Expression "git push"
     displayName: Push to GitHub Pages
 
