@@ -9,6 +9,16 @@ function Log-Error($message) {
         Write-Host "ERROR: $message"
     }
 }
+
+function Log-Warning($message) {
+    if ($env:TF_BUILD) {
+        Write-Host "##vso[task.logissue]warning $message"
+    }
+    else {
+        Write-Host "WARN: $message"
+    }
+}
+
 function Log-Info($message) {
     if ($env:TF_BUILD) {
         Write-Host "$message"
@@ -42,19 +52,48 @@ function Get-WyamPath {
     Pop-Location    
 }    
 
+function Get-GitCommitHash {
+
+    # Check if git is installed
+    $gitCommand = Get-Command "git" -CommandType Application -ErrorAction SilentlyContinue
+
+    if ($null -eq $gitCommand) {
+        Log-Warning "Cannot determine git commit hash: Git does not seem to be installed."
+        return $null
+    }
+
+    $commitHash = Invoke-Expression "git rev-parse HEAD"
+    if ($LASTEXITCODE -ne 0) {
+        Log-Warning "Cannot determine git commit hash: Git failed with exit code $LASTEXITCODE"
+        return $null
+    }
+
+    Log-Info "Current git commit hash is $commitHash"
+    return $commitHash
+}
+
+
+$wyamPath = Get-WyamPath
+$wyamArgs = "build"
 
 if ($null -eq $OutputDirectory) {
     $OutputDirectory = Join-Path $PSScriptRoot "output"    
 } 
 Log-Info "Using output directory '$OutputDirectory'"
+$wyamArgs +=  " --output `"$OutputDirectory`""
 
-$wyamPath = Get-WyamPath
-$inputRoot = $PSScriptRoot 
+$commitHash = Get-GitCommitHash
 
-Push-Location $inputRoot
+if($null -eq $commitHash) {
+    Log-Warning "Git commit hash is null, cannot embed git version into generated site"
+} else {
+    Log-Info "Embedding git commit hash $commitHash into generated site"
+    $wyamArgs += " --setting `"Git.CommitHash=$commitHash`""
+}
 
-Log-Info "Starting wyam build"
-Invoke-Expression "$wyamPath build --output `"`$OutputDirectory`""
+Push-Location $PSScriptRoot 
+Log-Info "Starting wyam build with arguments `"$wyamArgs`""
+Invoke-Expression "$wyamPath $wyamArgs"
 if ($LASTEXITCODE -ne 0) {
     Log-Error "wyam failed with exit code $LASTEXITCODE"
     throw "Build failed."
