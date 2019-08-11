@@ -1,32 +1,7 @@
 # Assumes "wyam" (https://wyam.io/) is installed either globally or in the same directory as this script
 param($OutputDirectory)
 
-function Log-Error($message) {
-    if ($env:TF_BUILD) {
-        Write-Host "##vso[task.logissue]error $message"
-    }
-    else {
-        Write-Host "ERROR: $message"
-    }
-}
-
-function Log-Warning($message) {
-    if ($env:TF_BUILD) {
-        Write-Host "##vso[task.logissue]warning $message"
-    }
-    else {
-        Write-Host "WARN: $message"
-    }
-}
-
-function Log-Info($message) {
-    if ($env:TF_BUILD) {
-        Write-Host "$message"
-    }
-    else {
-        Write-Host "INFO: $message"
-    }
-}
+. (Join-Path $PSScriptRoot "utils.ps1")
 
 function Get-WyamPath {
 
