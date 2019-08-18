@@ -42,7 +42,19 @@ if ($LASTEXITCODE -ne 0) {
 # TODO: Adjust commit message when running outside Azure Pipelines
 Invoke-Expression "git config user.name `"Azure Pipelines`" "
 Invoke-Expression "git config user.email `"<>`" "
-Invoke-Expression "git commit -m `"Automatic deploy to GitHub Pages by Azure Pipelines ($env:BUILD_DEFINITIONNAME/$env:BUILD_BUILDNUMBER)`" "
+
+$commitMessage = "Automatic deploy to GitHub Pages by Azure Pipelines`r`n" + `
+                 "`r`n" + `
+                 "Build Definition: $env:BUILD_DEFINITIONNAME`r`n" + `
+                 "Build Number: $env:BUILD_BUILDNUMBER`r`n" + `
+                 "Source: $env:BUILD_REPOSITORY_URI at revision $env:BUILD_SOURCEVERSION`r`n" + `
+                 "`r`n" + `
+                 "$env:BUILD_BUILDURI`r`n"
+
+$commitMessagePath = Join-Path (Get-Location) "commitMessage.txt"
+[System.IO.File]::WriteAllText($commitMessagePath, $commitMessage.TrimEnd())
+
+Invoke-Expression "git commit -F `"$commitMessagePath`" "
 if ($LASTEXITCODE -ne 0) {
     Log-Error "Committing to GitHub Pages repository failed, git exited with exit code $LASTEXITCODE"
     exit 1
